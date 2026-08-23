@@ -7,12 +7,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Parametric sleeve adapter that mates a hand-vacuum attachment to a larger vacuum's tube.
 A single-file Python CLI (`generate.py`) that uses `build123d` to produce STLs.
 All geometry is parameterized via named constants at the top of `generate.py`; a
-subset is exposed via argparse — see `--help`. Default STL output, written to
-CWD, is `tube-adapter.stl`.
+subset is exposed via argparse — see `--help`. STL output, written to CWD, is
+`tube-adapter-<component>.stl`; a bare `generate.py` writes
+`tube-adapter-adapter.stl`.
 
-This repo was scaffolded by Partwright. The freshly generated `generate.py`
-builds a placeholder cube so the repo runs out of the box; the real part
-geometry is implemented in `build_part`.
+This repo was scaffolded by Partwright. The real geometry is implemented in
+`build_part`, which dispatches the two components (`adapter`, `fit_test`) to one
+shared builder, `_build_sleeve`.
 
 ## Build plan
 
@@ -35,11 +36,12 @@ change done, and show the user the rendered preview.** For every geometry change
 6. If it is wrong, fix `build_part` and repeat from step 3. If it is right,
    **show the user `preview.png`** and summarize what changed.
 
-`preview.py` imports `build_part` from `generate.py` and calls it with no
-arguments, so **`build_part` must always be callable with no arguments** (every
+`preview.py` imports `build_part` from `generate.py` and calls it with only a
+component name, so **`build_part` must stay callable with no arguments** (every
 parameter keeps a default). The renderer is installed by
-`uv pip install -r requirements.txt`. For a multi-component part, extend
-`preview.py` to render each component (loop over them, or fuse for a combined view).
+`uv pip install -r requirements.txt`. `preview.py --component fit_test` renders
+the other component; pair it with `--output` so the two sheets do not overwrite
+each other.
 
 ## Multi-component parts
 
