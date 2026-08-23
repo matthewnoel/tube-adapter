@@ -1,0 +1,210 @@
+#!/usr/bin/env python3
+"""Render a multi-view PNG preview of tube-adapter.
+
+A quick visual check of `build_part`'s geometry without opening a slicer:
+tessellates the solid and renders a 2x2 contact sheet to `preview.png`. Three
+panels are shaded 3D views (isometric, front, right); the fourth is a flat,
+true-orthographic top-down (-Z) silhouette. Runs headless (matplotlib Agg
+backend), so it works over SSH or inside a coding agent with no display.
+
+This is a rough geometric check, not a photoreal render: matplotlib's 3D axes
+use a painter's algorithm with no depth buffer, so on concave parts a face may
+occasionally poke through and triangulation diagonals streak across faces. The
+flat 2D top panel sidesteps that — it draws the part's projected footprint with
+no triangulation overlay, so a through-hole pattern reads as clean voids and
+feature spacing is unambiguous. Use the contact sheet to confirm overall shape,
+orientation (+Z up, floor on z = 0), centering, and feature placement — then
+slice in Bambu Studio for the real verification.
+
+Reuses `build_part` from generate.py. This part has two components, so
+`--component` picks the one to render and defaults to the first (`adapter`);
+every parameter of `build_part` keeps a default, which is what lets the repo run
+out of the box.
+"""
+
+from __future__ import annotations
+
+import argparse
+from pathlib import Path
+
+import matplotlib
+
+matplotlib.use("Agg")  # headless raster backend; MUST precede the pyplot import
+
+import matplotlib.pyplot as plt  # noqa: E402
+import numpy as np  # noqa: E402
+from matplotlib.collections import PolyCollection  # noqa: E402
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection  # noqa: E402
+
+from generate import COMPONENTS, build_part  # noqa: E402
+
+DEFAULT_OUTPUT = "preview.png"
+DEFAULT_TOLERANCE_MM = 0.2  # mesh linear deflection; smaller is finer but slower
+DEFAULT_DPI = 110
+
+# (grid_pos, name, elevation, azimuth, flat_axis) per 3D panel. The two
+# axis-aligned views read as standard front / right elevations; `flat_axis` is
+# the depth axis to hide on each (None for isometric). Grid position 2 (top
+# right) is reserved for the flat 2D true-ortho top panel drawn separately.
+_VIEWS_3D = (
+    (1, "isometric", 30, -60, None),
+    (3, "front (-Y)", 0, -90, "y"),
+    (4, "right (+X)", 0, 0, "x"),
+)
+
+# Light direction for the cheap diffuse shading that gives the faces depth.
+_LIGHT = np.array([0.3, 0.4, 0.85])
+
+
+def _triangles(tolerance: float, component: str) -> np.ndarray:
+    """Tessellate one component into an (n, 3, 3) array of triangle vertices."""
+    solid = build_part(component)
+    vertices, faces = solid.tessellate(tolerance)
+    points = np.array([(v.X, v.Y, v.Z) for v in vertices])
+    return points[np.array(faces, dtype=int)]
+
+
+def _face_shading(triangles: np.ndarray) -> np.ndarray:
+    """Return an (n, 4) RGBA array — one grey per face by |normal . light|."""
+    normals = np.cross(
+        triangles[:, 1] - triangles[:, 0], triangles[:, 2] - triangles[:, 0]
+    )
+    lengths = np.linalg.norm(normals, axis=1, keepdims=True)
+    normals = normals / np.where(lengths == 0, 1.0, lengths)
+    light = _LIGHT / np.linalg.norm(_LIGHT)
+    brightness = 0.35 + 0.65 * np.clip(np.abs(normals @ light), 0.0, 1.0)
+    return np.column_stack(
+        [brightness, brightness, brightness, np.ones_like(brightness)]
+    )
+
+
+def _draw_top_2d(
+    ax, triangles: np.ndarray, center: np.ndarray, half: np.ndarray
+) -> None:
+    """Draw a flat true-orthographic top-down (-Z) silhouette into a 2D axes.
+
+    Projects every triangle straight onto the XY plane and fills it with no
+    edge lines, so the union reads as a solid footprint and through-holes show
+    as clean voids — no 3D depth, no triangulation streaks. This is the panel
+    to trust for reading a hole pattern and its spacing.
+
+    `half` holds per-axis half-extents; equal aspect is kept so the footprint is
+    never distorted, only the X/Y window is framed to the real bounding box.
+    """
+    footprint = triangles[:, :, :2]  # drop Z -> (n, 3, 2) XY triangles
+    ax.add_collection(
+        PolyCollection(footprint, facecolors=(0.55, 0.55, 0.6, 1.0), edgecolors="none")
+    )
+    ax.set_aspect("equal")
+    ax.set_xlim(center[0] - half[0], center[0] + half[0])
+    ax.set_ylim(center[1] - half[1], center[1] + half[1])
+    ax.set_title("top (XY, flat ortho)")
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.grid(True, linewidth=0.3, alpha=0.4)
+
+
+def render(output: Path, tolerance: float, dpi: int, component: str) -> None:
+    """Render the 2x2 multi-view contact sheet to `output`."""
+    triangles = _triangles(tolerance, component)
+    colors = _face_shading(triangles)
+
+    points = triangles.reshape(-1, 3)
+    mins = points.min(axis=0)
+    maxs = points.max(axis=0)
+    center = (mins + maxs) / 2
+    # Per-axis half-extents (with margin) so a thin part keeps true proportions
+    # instead of rendering as a sliver inside one big cubic box. A small floor,
+    # scaled to overall size, keeps a perfectly flat axis from collapsing to a
+    # zero-width window.
+    spans = maxs - mins
+    floor = max(spans.max(), 1.0) * 0.01
+    half = np.maximum(spans, floor) / 2 * 1.1
+
+    fig = plt.figure(figsize=(10, 10))
+    for pos, name, elev, azim, flat in _VIEWS_3D:
+        ax = fig.add_subplot(2, 2, pos, projection="3d")
+        mesh = Poly3DCollection(
+            triangles,
+            facecolors=colors,
+            edgecolors=(0, 0, 0, 0.15),
+            linewidths=0.2,
+        )
+        ax.add_collection3d(mesh)
+        ax.set_proj_type("ortho")  # true orthographic so dimensions read true
+        ax.view_init(elev=elev, azim=azim)
+        ax.set_xlim(center[0] - half[0], center[0] + half[0])
+        ax.set_ylim(center[1] - half[1], center[1] + half[1])
+        ax.set_zlim(center[2] - half[2], center[2] + half[2])
+        # Box aspect proportional to the real per-axis extents: a cube stays a
+        # cube and a thin plate renders at its true (thin) aspect.
+        ax.set_box_aspect(tuple(half))
+        ax.set_title(name)
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_zlabel("Z")
+        # On a flat-on elevation the depth axis collapses to a line; hide its
+        # ticks and label so they do not pile up at the panel edge.
+        if flat == "x":
+            ax.set_xticklabels([])
+            ax.set_xlabel("")
+        elif flat == "y":
+            ax.set_yticklabels([])
+            ax.set_ylabel("")
+        elif flat == "z":
+            ax.set_zticklabels([])
+            ax.set_zlabel("")
+
+    # Top-right panel: the flat 2D true-ortho top view (grid position 2).
+    _draw_top_2d(fig.add_subplot(2, 2, 2), triangles, center, half)
+
+    fig.suptitle(f"tube-adapter preview — {component}", fontsize=14)
+    fig.savefig(output, dpi=dpi)
+    plt.close(fig)
+
+
+def _parse_args():
+    p = argparse.ArgumentParser(
+        description="Render a multi-view PNG preview of tube-adapter.",
+    )
+    p.add_argument(
+        "--output",
+        type=Path,
+        default=Path(DEFAULT_OUTPUT),
+        metavar="PATH",
+        help=f"PNG output path. Default: {DEFAULT_OUTPUT}.",
+    )
+    p.add_argument(
+        "--tolerance",
+        type=float,
+        default=DEFAULT_TOLERANCE_MM,
+        metavar="MM",
+        help=(
+            "Mesh linear deflection in mm; smaller is finer but slower. "
+            f"Default: {DEFAULT_TOLERANCE_MM}."
+        ),
+    )
+    p.add_argument(
+        "--dpi",
+        type=int,
+        default=DEFAULT_DPI,
+        metavar="DPI",
+        help=f"Output resolution in dots per inch. Default: {DEFAULT_DPI}.",
+    )
+    p.add_argument(
+        "--component",
+        choices=list(COMPONENTS),
+        default=COMPONENTS[0],
+        help=f"Which component to render. Default: {COMPONENTS[0]}.",
+    )
+    return p.parse_args()
+
+
+def main():
+    args = _parse_args()
+    render(args.output, args.tolerance, args.dpi, args.component)
+    print(f"Wrote preview: {args.output}")
+
+
+if __name__ == "__main__":
+    main()

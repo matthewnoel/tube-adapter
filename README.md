@@ -1,0 +1,68 @@
+# tube-adapter
+
+Parametric sleeve adapter that mates a hand-vacuum attachment to a larger vacuum's tube.
+A single-file `build123d` CLI that generates printable STLs. Scaffolded by
+Partwright.
+
+## Prerequisites
+
+- [uv](https://docs.astral.sh/uv/)
+
+## Environment Setup
+
+```sh
+uv venv .venv --python 3.12
+uv pip install -r requirements.txt
+# dev tools (black); needed to run the format step in CLAUDE.md
+uv pip install -r requirements-dev.txt
+```
+
+## Usage
+
+With default sizes:
+
+```sh
+.venv/bin/python generate.py
+```
+
+The freshly scaffolded `generate.py` builds a placeholder cube. Set its edge
+length with `--size`:
+
+```sh
+.venv/bin/python generate.py --size 25 --output custom_filename.stl
+```
+
+See all options:
+
+```sh
+.venv/bin/python generate.py --help
+```
+
+## Visual preview
+
+Render a multi-view PNG of the current geometry without opening a slicer:
+
+```sh
+.venv/bin/python preview.py
+```
+
+This writes `preview.png`, a 2×2 contact sheet (isometric, top, front, right).
+Tune mesh fineness with `--tolerance` (smaller = finer) and resolution with
+`--dpi`. The renderer ships in `requirements.txt`, so it works after the standard
+setup above.
+
+## Working with Claude
+
+Open this folder in Claude Code. `CLAUDE.md` tells the agent to implement
+`build_part`, regenerate the STL, render `preview.py`, and visually verify
+`preview.png` before declaring a change done. Put reference drawings — SVGs from
+`partwright sketch`, photos — in `reference/` so the agent can see your design
+intent.
+
+## Development
+
+Format the code (requires the dev deps from the setup step above):
+
+```sh
+.venv/bin/black *.py
+```
