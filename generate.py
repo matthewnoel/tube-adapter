@@ -35,13 +35,13 @@ from build123d import Axis, Box, GeomType, Polyline, export_stl, make_face, revo
 # plus the two clearances and two engagement lengths. All nine are CLI flags:
 # they are what changes when this adapter is re-used for a different tube pair.
 VAC_TUBE_OD_MM = (
-    38.5  # outer diameter of the big vacuum's tube, which the socket slides over
+    39.5  # outer diameter of the big vacuum's tube, which the socket slides over
 )
 VAC_TUBE_ID_MM = (
     34.0  # inner bore of the big vacuum's tube; the spigot bore matches it exactly
 )
 ATTACHMENT_ID_MM = (
-    41.0  # inner bore of the attachment's socket, which the spigot inserts into
+    40.0  # inner bore of the attachment's socket, which the spigot inserts into
 )
 FLANGE_OD_MM = (
     54.0  # outer diameter of the stop flange; set flush with the attachment's rim OD
@@ -50,10 +50,10 @@ MOUTH_RISE_MM = (
     15.0  # axial rise of the attachment's mitred mouth, measured across its bore
 )
 SOCKET_CLEARANCE_MM = (
-    0.20  # radial clearance per side between the socket bore and the vac tube
+    0.25  # radial clearance per side between the socket bore and the vac tube
 )
 SPIGOT_CLEARANCE_MM = (
-    0.15  # radial clearance per side between the spigot OD and the attachment bore
+    0.85  # radial clearance per side between the spigot OD and the attachment bore
 )
 SOCKET_DEPTH_MM = 35.0  # axial length of the socket section that grips the vac tube
 SPIGOT_DEPTH_MM = (
@@ -345,8 +345,8 @@ def _validate(
 # Expected overall dimensions (X, Y, Z) in mm at default parameters, from
 # BUILD_PLAN.md "Verification steps".
 _EXPECTED_BBOX_MM = {
-    "adapter": (54.0, 54.0, 87.26),
-    "fit_test": (54.0, 54.0, 38.26),
+    "adapter": (54.0, 54.0, 87.75),
+    "fit_test": (54.0, 54.0, 38.75),
 }
 _BBOX_TOLERANCE_MM = 0.05
 

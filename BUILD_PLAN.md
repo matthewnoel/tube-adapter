@@ -6,6 +6,17 @@ single-file `build123d` CLI of `phone-centipede` quality — named constants at 
 top, a stated coordinate system, a deliberate CLI subset, and the non-obvious
 decisions written down.
 
+> **Status: implemented and validated (2026-08-24).** `generate.py` is built and
+> the part has been printed and confirmed to fit. The **constants table** and
+> **verification bounding boxes** below carry the validated defaults. The worked
+> arithmetic elsewhere in this plan — the z-landmark table, the revolve-profile
+> vertex tables, the derived-quantity worked examples — was computed at the
+> *original interview* values (`vac_tube_od` 38.5, `attachment_id` 41.0,
+> clearances 0.20/0.15), which print testing later corrected. Those numbers are
+> retained as a record of the construction logic; the **formulas** they
+> illustrate are all still exact. For current values, read `generate.py` or
+> `DESIGN_BRIEF.md`, which are authoritative.
+
 ## Objective
 
 `generate.py` builds a one-piece sleeve adapter that joins a hand-vacuum
@@ -15,10 +26,10 @@ between them that seats on the attachment's angle-cut rim.
 
 It builds two components, selected by `--component`:
 
-- **`adapter`** (default) — the real part. Bounding box 54.0 × 54.0 × 87.26 mm.
+- **`adapter`** (default) — the real part. Bounding box 54.0 × 54.0 × 87.75 mm.
 - **`fit_test`** — identical geometry with both engagement lengths cut to 8 mm
   and the mitred seat retained, so both fits and the seat angle can be checked in
-  a short print. Bounding box 54.0 × 54.0 × 38.26 mm.
+  a short print. Bounding box 54.0 × 54.0 × 38.75 mm.
 
 Both must run out of the box with default parameters and emit a valid STL that
 is a single watertight solid. `--all` exports both.
@@ -175,13 +186,13 @@ are mm throughout.
 
 | Constant | Default | CLI flag | Notes |
 | --- | --- | --- | --- |
-| `VAC_TUBE_OD_MM` | 38.5 | `--vac-tube-od` | big vacuum tube's outer diameter |
+| `VAC_TUBE_OD_MM` | 39.5 | `--vac-tube-od` | big vacuum tube's outer diameter |
 | `VAC_TUBE_ID_MM` | 34.0 | `--vac-tube-id` | big vacuum tube's bore |
-| `ATTACHMENT_ID_MM` | 41.0 | `--attachment-id` | attachment socket's bore |
+| `ATTACHMENT_ID_MM` | 40.0 | `--attachment-id` | attachment socket's bore |
 | `FLANGE_OD_MM` | 54.0 | `--flange-od` | stop flange OD, flush with the rim |
 | `MOUTH_RISE_MM` | 15.0 | `--mouth-rise` | mitre rise across `ATTACHMENT_ID_MM` |
-| `SOCKET_CLEARANCE_MM` | 0.20 | `--socket-clearance` | per-side, socket over tube |
-| `SPIGOT_CLEARANCE_MM` | 0.15 | `--spigot-clearance` | per-side, spigot in bore |
+| `SOCKET_CLEARANCE_MM` | 0.25 | `--socket-clearance` | per-side, socket over tube |
+| `SPIGOT_CLEARANCE_MM` | 0.85 | `--spigot-clearance` | per-side, spigot in bore |
 | `SOCKET_DEPTH_MM` | 35.0 | `--socket-depth` | socket engagement length |
 | `SPIGOT_DEPTH_MM` | 30.0 | `--spigot-depth` | spigot length above `seat_high_z` |
 | `WALL_THICKNESS_MM` | 2.0 | — | socket wall |
@@ -239,8 +250,8 @@ parametric.
 1. `generate.py` runs with no arguments and writes `tube-adapter-adapter.stl`.
 2. `--component fit_test` writes `tube-adapter-fit_test.stl`; `--all` writes both.
 3. **Bounding-box check**, default parameters:
-   - `adapter`: X **54.0**, Y **54.0**, Z **87.26** mm
-   - `fit_test`: X **54.0**, Y **54.0**, Z **38.26** mm
+   - `adapter`: X **54.0**, Y **54.0**, Z **87.75** mm
+   - `fit_test`: X **54.0**, Y **54.0**, Z **38.75** mm
 4. `check_part` asserts each component is a **single watertight solid**.
 5. **Render and visually verify `preview.png`** before slicing. Confirm, in order:
    - the flange wedge is **thick at +X and thin at −X** (the mitre sign check);
