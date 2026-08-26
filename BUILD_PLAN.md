@@ -192,7 +192,7 @@ are mm throughout.
 | `FLANGE_OD_MM` | 54.0 | `--flange-od` | stop flange OD, flush with the rim |
 | `MOUTH_RISE_MM` | 15.0 | `--mouth-rise` | mitre rise across `ATTACHMENT_ID_MM` |
 | `SOCKET_CLEARANCE_MM` | 0.25 | `--socket-clearance` | per-side, socket over tube |
-| `SPIGOT_CLEARANCE_MM` | 0.85 | `--spigot-clearance` | per-side, spigot in bore |
+| `SPIGOT_CLEARANCE_MM` | 0.75 | `--spigot-clearance` | per-side, spigot in bore |
 | `SOCKET_DEPTH_MM` | 35.0 | `--socket-depth` | socket engagement length |
 | `SPIGOT_DEPTH_MM` | 30.0 | `--spigot-depth` | spigot length above `seat_high_z` |
 | `WALL_THICKNESS_MM` | 2.0 | — | socket wall |
