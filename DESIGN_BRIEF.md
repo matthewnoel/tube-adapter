@@ -55,7 +55,7 @@ cli     = true
 [[parameters]]
 name    = "spigot_clearance"
 meaning = "radial clearance per side between the spigot OD and the attachment bore"
-default = 0.85
+default = 0.75
 cli     = true
 
 [[parameters]]
@@ -125,7 +125,7 @@ derived_from = "socket_od = socket_bore + 2 * wall_thickness"
 [[parameters]]
 name         = "spigot_od"
 meaning      = "spigot outer diameter"
-default      = 38.30
+default      = 38.50
 cli          = false
 derived_from = "spigot_od = attachment_id - 2 * spigot_clearance"
 
@@ -205,7 +205,7 @@ is longest, and thickest (22.75 mm) at +X, where it is shortest.
   straight into the spigot's bore with no internal lip at all. It also rescues
   the wall thickness. Sized against the tube's outside, the spigot wall would be
   `(40.0 - 40.00) / 2` = **zero** — the sleeve could not exist at all; sized
-  against its bore it is `(38.30 - 34.0) / 2` = **2.15 mm**.
+  against its bore it is `(38.50 - 34.0) / 2` = **2.25 mm**.
 - `flange_od = attachment_id + 2 * rim_wall` — set flush with the attachment's
   measured 54.0 mm rim OD so the flange covers the whole rim face and doubles as
   a grip surface for pulling a stuck joint apart. Dropping it to 48 saves about
@@ -220,22 +220,22 @@ between test prints.
 | Interface | Fit | Clearance/side | Flag |
 | --- | --- | --- | --- |
 | Socket bore over vac tube OD | snug friction | 0.25 mm | `--socket-clearance` |
-| Spigot OD into attachment bore | snug press | 0.85 mm | `--spigot-clearance` |
+| Spigot OD into attachment bore | snug press | 0.75 mm | `--spigot-clearance` |
 
 **The seal is made by the spigot fit, not by the flange** — a minimum of 32.9 mm
 of straight bore contact is what holds vacuum. The flange is a depth stop and a
 secondary seal, so a degree or two of mitre mismatch costs nothing.
 
-**`spigot_clearance = 0.85` is not a normal clearance, and should not be read as
+**`spigot_clearance = 0.75` is not a normal clearance, and should not be read as
 one.** Reference values for a calibrated FDM printer are ~0.10–0.15 mm/side for a
 snug press fit and ~0.20–0.30 mm/side for a sliding fit. This value is roughly
 six times that because it is absorbing measurement error, not print error: the
 attachment's bore was measured with a cloth tape at 41.0 mm and later corrected
 to a nominal 40.0 mm, and the true figure is evidently smaller still. What is
-actually validated by print testing is the **resulting spigot OD of 38.30 mm** —
+actually validated by print testing is the **resulting spigot OD of 38.50 mm** —
 `attachment_id` and `spigot_clearance` are simply the pair of numbers that
 produce it. Anyone re-using this design for a different attachment should measure
-the real bore with calipers and reset both values, rather than inheriting 0.85.
+the real bore with calipers and reset both values, rather than inheriting 0.75.
 
 The socket side needs no such caveat: `socket_clearance = 0.25` is an ordinary
 snug-fit value against a `vac_tube_od` of 39.5 mm, and both were confirmed by
@@ -348,9 +348,9 @@ interview are closed:
 
 1. ~~The clearances are unvalidated.~~ **Resolved.** Settled over seven printed
    revisions. `socket_clearance = 0.25` gives a snug, non-wobbling grip on the vac
-   tube. `spigot_clearance = 0.85` (spigot OD 38.30 mm) enters and seats; the
-   maker reported the final print as working and very slightly tight, and the
-   committed default steps it 0.2 mm looser than that print.
+   tube. `spigot_clearance = 0.75` (spigot OD 38.50 mm) enters and seats. This
+   is the exact geometry of the accepted print, which the maker confirmed as
+   working, with the note that it is very slightly tight if anything.
 2. ~~The attachment's socket bottom is assumed perpendicular to the axis.~~
    **Resolved.** A 30 mm spigot seats fully with the flange against the rim, so
    whatever the floor's geometry, it is deeper than the spigot reaches.

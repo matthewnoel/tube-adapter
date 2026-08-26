@@ -53,7 +53,7 @@ SOCKET_CLEARANCE_MM = (
     0.25  # radial clearance per side between the socket bore and the vac tube
 )
 SPIGOT_CLEARANCE_MM = (
-    0.85  # radial clearance per side between the spigot OD and the attachment bore
+    0.75  # radial clearance per side between the spigot OD and the attachment bore
 )
 SOCKET_DEPTH_MM = 35.0  # axial length of the socket section that grips the vac tube
 SPIGOT_DEPTH_MM = (
